@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_preset.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+preset_name = "Corvette (Medium)"
+mass = 100.0
+max_thrust = 340.0
+linear_drag = 4.5
+max_speed = 250.0
+moment_of_inertia = 90.0
+kp = 110.0
+ki = 0.5
+damping_ratio = 1.0
+max_torque = 200.0
+integral_limit = 20.0
+hull_scale = 1.0
+hull_color = Color(0.75, 0.62, 0.4, 1)

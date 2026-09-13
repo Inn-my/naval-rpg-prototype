@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/ship_preset.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+preset_name = "Galleon (Heavy / Slow)"
+mass = 260.0
+max_thrust = 380.0
+linear_drag = 7.0
+max_speed = 150.0
+moment_of_inertia = 320.0
+kp = 70.0
+ki = 0.5
+damping_ratio = 1.2
+max_torque = 320.0
+integral_limit = 20.0
+hull_scale = 1.5
+hull_color = Color(0.5, 0.15, 0.15, 1)
