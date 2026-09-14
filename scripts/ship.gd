@@ -10,6 +10,7 @@ class_name Ship
 ## own damping/inertia handling.
 
 @export var preset: ShipPreset
+@export var health: float = 100.0
 
 var linear_velocity: Vector2 = Vector2.ZERO
 var angular_velocity: float = 0.0
@@ -19,7 +20,14 @@ var _angle_error_integral: float = 0.0
 @onready var hull: Polygon2D = $Hull
 
 func _ready() -> void:
+	add_to_group("player")
 	apply_preset(preset)
+
+func take_damage(amount: float) -> void:
+	var was_alive: bool = health > 0.0
+	health -= amount
+	if was_alive and health <= 0.0:
+		print("Player ship destroyed! (health depleted) — death handling not implemented yet")
 
 ## Swaps the active hull preset for live feel comparison. Keeps world
 ## position but resets heading/velocity so each hull starts from rest.
