@@ -11,6 +11,9 @@ const FIRE_COOLDOWN := 1.0
 @onready var targeting: TargetingSystem = $Ship/TargetingSystem
 @onready var info_label: Label = $UI/InfoLabel
 @onready var fire_button: Button = $UI/TargetBar/FireButton
+@onready var player_health_fill: ColorRect = $UI/PlayerHealthBar/Fill
+@onready var game_over_overlay: Control = $UI/GameOverOverlay
+@onready var restart_button: Button = $UI/GameOverOverlay/RestartButton
 
 var _fire_cooldown_remaining: float = 0.0
 
@@ -21,9 +24,22 @@ func _ready() -> void:
 	$UI/TargetBar/CycleTargetButton.pressed.connect(targeting.cycle_target)
 	$UI/TargetBar/ClearTargetButton.pressed.connect(targeting.clear_target)
 	fire_button.pressed.connect(_on_fire_pressed)
+	ship.died.connect(_on_ship_died)
+	restart_button.pressed.connect(_on_restart_pressed)
 
 func _on_preset_selected(preset: ShipPreset) -> void:
 	ship.apply_preset(preset)
+
+func _on_ship_died() -> void:
+	get_tree().paused = true
+	game_over_overlay.visible = true
+
+func _on_restart_pressed() -> void:
+	# reload_current_scene() resets the ship to the position baked into
+	# Main.tscn. That's a temporary stand-in for a real checkpoint/port
+	# system planned later — revisit this once that exists.
+	get_tree().paused = false
+	get_tree().reload_current_scene()
 
 func _on_fire_pressed() -> void:
 	if _fire_cooldown_remaining > 0.0:
@@ -55,6 +71,8 @@ func _process(delta: float) -> void:
 		heading_error_deg,
 		target_text,
 	]
+
+	player_health_fill.scale.x = clamp(ship.health / Ship.MAX_HEALTH, 0.0, 1.0)
 
 	if _fire_cooldown_remaining > 0.0:
 		_fire_cooldown_remaining -= delta

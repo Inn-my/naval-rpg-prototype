@@ -9,8 +9,12 @@ class_name Ship
 ## the PID math fully transparent and independent of the physics engine's
 ## own damping/inertia handling.
 
+signal died
+
+const MAX_HEALTH := 100.0
+
 @export var preset: ShipPreset
-@export var health: float = 100.0
+@export var health: float = MAX_HEALTH
 
 var linear_velocity: Vector2 = Vector2.ZERO
 var angular_velocity: float = 0.0
@@ -27,7 +31,8 @@ func take_damage(amount: float) -> void:
 	var was_alive: bool = health > 0.0
 	health -= amount
 	if was_alive and health <= 0.0:
-		print("Player ship destroyed! (health depleted) — death handling not implemented yet")
+		print("Player ship destroyed!")
+		died.emit()
 
 ## Swaps the active hull preset for live feel comparison. Keeps world
 ## position but resets heading/velocity so each hull starts from rest.
