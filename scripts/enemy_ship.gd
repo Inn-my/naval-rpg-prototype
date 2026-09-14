@@ -8,6 +8,8 @@ class_name EnemyShip
 const DRIFT_SPEED_RANGE := Vector2(20.0, 60.0)
 const CONTAINMENT_RADIUS := 1400.0
 
+@export var health: float = 100.0
+
 var _velocity: Vector2
 
 func _ready() -> void:
@@ -15,6 +17,11 @@ func _ready() -> void:
 	var speed: float = randf_range(DRIFT_SPEED_RANGE.x, DRIFT_SPEED_RANGE.y)
 	_velocity = Vector2.RIGHT.rotated(randf_range(0.0, TAU)) * speed
 	rotation = _velocity.angle()
+
+func take_damage(amount: float) -> void:
+	health -= amount
+	if health <= 0.0:
+		queue_free()
 
 func _physics_process(delta: float) -> void:
 	position += _velocity * delta

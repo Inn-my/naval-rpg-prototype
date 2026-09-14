@@ -34,6 +34,7 @@ func _on_fire_pressed() -> void:
 	var projectile: Node2D = PROJECTILE_SCENE.instantiate()
 	add_child(projectile)
 	projectile.global_position = ship.global_position
+	projectile.target = target
 	projectile.target_position = target.global_position
 	_fire_cooldown_remaining = FIRE_COOLDOWN
 
