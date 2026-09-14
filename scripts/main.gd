@@ -3,10 +3,16 @@ extends Node2D
 const SLOOP: ShipPreset = preload("res://resources/ship_presets/sloop_small_fast.tres")
 const CORVETTE: ShipPreset = preload("res://resources/ship_presets/corvette_medium.tres")
 const GALLEON: ShipPreset = preload("res://resources/ship_presets/galleon_heavy_slow.tres")
+const PROJECTILE_SCENE: PackedScene = preload("res://scenes/Projectile.tscn")
+
+const FIRE_COOLDOWN := 1.0
 
 @onready var ship: Ship = $Ship
 @onready var targeting: TargetingSystem = $Ship/TargetingSystem
 @onready var info_label: Label = $UI/InfoLabel
+@onready var fire_button: Button = $UI/TargetBar/FireButton
+
+var _fire_cooldown_remaining: float = 0.0
 
 func _ready() -> void:
 	$UI/PresetBar/SloopButton.pressed.connect(_on_preset_selected.bind(SLOOP))
@@ -14,18 +20,32 @@ func _ready() -> void:
 	$UI/PresetBar/GalleonButton.pressed.connect(_on_preset_selected.bind(GALLEON))
 	$UI/TargetBar/CycleTargetButton.pressed.connect(targeting.cycle_target)
 	$UI/TargetBar/ClearTargetButton.pressed.connect(targeting.clear_target)
+	fire_button.pressed.connect(_on_fire_pressed)
 
 func _on_preset_selected(preset: ShipPreset) -> void:
 	ship.apply_preset(preset)
 
-func _process(_delta: float) -> void:
+func _on_fire_pressed() -> void:
+	if _fire_cooldown_remaining > 0.0:
+		return
+	var target: Node2D = targeting.current_target
+	if target == null or not is_instance_valid(target):
+		return
+	var projectile: Node2D = PROJECTILE_SCENE.instantiate()
+	add_child(projectile)
+	projectile.global_position = ship.global_position
+	projectile.target_position = target.global_position
+	_fire_cooldown_remaining = FIRE_COOLDOWN
+
+func _process(delta: float) -> void:
 	if ship.preset == null:
 		return
 	var heading_error_deg := 0.0
 	if SteeringInput.active:
 		heading_error_deg = rad_to_deg(angle_difference(ship.rotation, SteeringInput.target_angle))
+	var has_target: bool = targeting.current_target != null and is_instance_valid(targeting.current_target)
 	var target_text: String = "none"
-	if targeting.current_target and is_instance_valid(targeting.current_target):
+	if has_target:
 		target_text = targeting.current_target.name
 	info_label.text = "%s\nspeed: %d / %d\nheading err: %.1f deg\ntarget: %s" % [
 		ship.preset.preset_name,
@@ -34,3 +54,7 @@ func _process(_delta: float) -> void:
 		heading_error_deg,
 		target_text,
 	]
+
+	if _fire_cooldown_remaining > 0.0:
+		_fire_cooldown_remaining -= delta
+	fire_button.disabled = not has_target or _fire_cooldown_remaining > 0.0
