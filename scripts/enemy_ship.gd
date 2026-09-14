@@ -17,12 +17,20 @@ const PROJECTILE_SCENE: PackedScene = preload("res://scenes/Projectile.tscn")
 const ATTACK_RANGE := 600.0
 const ATTACK_COOLDOWN := 2.5
 
+const DEATH_FLASH_COLOR := Color(1, 1, 1, 1)
+const DEATH_FLASH_DURATION := 0.1
+const DEATH_FADE_DURATION := 0.45
+
 @export var health: float = MAX_HEALTH
 
 var _velocity: Vector2
 var _attack_cooldown_remaining: float = 0.0
+var _dying: bool = false
 
+@onready var health_bar: Node2D = $HealthBar
 @onready var health_bar_fill: Polygon2D = $HealthBar/Fill
+@onready var hit_area: Area2D = $HitArea
+@onready var death_burst: CPUParticles2D = $DeathBurst
 
 func _ready() -> void:
 	add_to_group("enemies")
@@ -32,10 +40,36 @@ func _ready() -> void:
 	_update_health_bar()
 
 func take_damage(amount: float) -> void:
+	if _dying:
+		return
 	health -= amount
 	_update_health_bar()
 	if health <= 0.0:
-		queue_free()
+		_die()
+
+## Plays a quick white flash, then shrinks/fades the ship out, then frees it.
+## Hitbox and health bar are disabled immediately so a "dead" enemy can't
+## still be damaged or targeted while its death animation plays out.
+func _die() -> void:
+	_dying = true
+	remove_from_group("enemies")
+	hit_area.set_deferred("monitorable", false)
+	hit_area.set_deferred("monitoring", false)
+	health_bar.visible = false
+
+	death_burst.get_parent().remove_child(death_burst)
+	get_tree().current_scene.add_child(death_burst)
+	death_burst.global_position = global_position
+	death_burst.emitting = true
+	death_burst.finished.connect(death_burst.queue_free)
+
+	var tween: Tween = create_tween()
+	tween.tween_property(self, "modulate", DEATH_FLASH_COLOR, DEATH_FLASH_DURATION)
+	tween.set_parallel(true)
+	tween.tween_property(self, "scale", Vector2.ZERO, DEATH_FADE_DURATION)
+	tween.tween_property(self, "modulate:a", 0.0, DEATH_FADE_DURATION)
+	tween.set_parallel(false)
+	tween.tween_callback(queue_free)
 
 func _update_health_bar() -> void:
 	var fraction: float = clamp(health / MAX_HEALTH, 0.0, 1.0)
@@ -48,6 +82,8 @@ func _update_health_bar() -> void:
 		health_bar_fill.color = HEALTH_COLOR_LOW
 
 func _physics_process(delta: float) -> void:
+	if _dying:
+		return
 	position += _velocity * delta
 	if position.length() > CONTAINMENT_RADIUS:
 		_velocity = -position.normalized() * _velocity.length()
