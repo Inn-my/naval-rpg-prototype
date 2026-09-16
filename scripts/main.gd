@@ -29,12 +29,15 @@ const ENEMY_TIERS := [EnemyShip.Tier.WEAK, EnemyShip.Tier.NORMAL, EnemyShip.Tier
 @onready var game_over_overlay: Control = $UI/GameOverOverlay
 @onready var restart_button: Button = $UI/GameOverOverlay/RestartButton
 @onready var wave_respawn_timer: Timer = $WaveRespawnTimer
-@onready var port: Port = $Port
 @onready var trade_prompt_button: Button = $UI/TradePrompt
 @onready var trade_ui: TradeUI = $UI/TradeUI
 
 var _fire_cooldown_remaining: float = 0.0
 var _enemies_alive: int = 0
+## Counts how many ports the ship is currently inside range of. A count
+## instead of a bool so two overlapping port ranges (unlikely given their
+## spacing, but cheap to handle correctly) can't hide the prompt early.
+var _ports_in_range: int = 0
 
 func _ready() -> void:
 	$UI/PresetBar/SloopButton.pressed.connect(_on_preset_selected.bind(SLOOP))
@@ -46,19 +49,23 @@ func _ready() -> void:
 	ship.died.connect(_on_ship_died)
 	restart_button.pressed.connect(_on_restart_pressed)
 	wave_respawn_timer.timeout.connect(_spawn_wave)
-	port.player_entered.connect(_on_port_range_entered)
-	port.player_exited.connect(_on_port_range_exited)
+	for port: Port in get_tree().get_nodes_in_group("ports"):
+		port.player_entered.connect(_on_port_range_entered)
+		port.player_exited.connect(_on_port_range_exited)
 	trade_prompt_button.pressed.connect(_on_trade_pressed)
 	_spawn_wave()
 
 func _on_port_range_entered() -> void:
+	_ports_in_range += 1
 	trade_prompt_button.visible = true
 
-## Leaving range also closes the trade panel if it's open — buying should
-## only be possible while actually at the port.
+## Leaving range of every port also closes the trade panel if it's open —
+## buying/selling should only be possible while actually at a port.
 func _on_port_range_exited() -> void:
-	trade_prompt_button.visible = false
-	trade_ui.close()
+	_ports_in_range = max(_ports_in_range - 1, 0)
+	if _ports_in_range == 0:
+		trade_prompt_button.visible = false
+		trade_ui.close()
 
 func _on_trade_pressed() -> void:
 	trade_ui.open()

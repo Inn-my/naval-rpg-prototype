@@ -10,6 +10,7 @@ signal player_entered
 signal player_exited
 
 func _ready() -> void:
+	add_to_group("ports")
 	area_entered.connect(_on_area_entered)
 	area_exited.connect(_on_area_exited)
 
