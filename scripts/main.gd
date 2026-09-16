@@ -17,6 +17,10 @@ const ENEMY_SPAWN_POSITIONS := [
 	Vector2(200, 700),
 ]
 
+## Strength tiers a spawned enemy can be assigned, picked with equal
+## probability per enemy in _spawn_wave().
+const ENEMY_TIERS := [EnemyShip.Tier.WEAK, EnemyShip.Tier.NORMAL, EnemyShip.Tier.STRONG]
+
 @onready var ship: Ship = $Ship
 @onready var targeting: TargetingSystem = $Ship/TargetingSystem
 @onready var info_label: Label = $UI/InfoLabel
@@ -49,9 +53,10 @@ func _on_preset_selected(preset: ShipPreset) -> void:
 ## that defines how enemies are placed.
 func _spawn_wave() -> void:
 	for spawn_position in ENEMY_SPAWN_POSITIONS:
-		var enemy: Node2D = ENEMY_SCENE.instantiate()
+		var enemy: EnemyShip = ENEMY_SCENE.instantiate()
 		add_child(enemy)
 		enemy.position = spawn_position
+		enemy.set_tier(ENEMY_TIERS[randi() % ENEMY_TIERS.size()])
 		enemy.tree_exited.connect(_on_enemy_tree_exited)
 	_enemies_alive = ENEMY_SPAWN_POSITIONS.size()
 
@@ -102,7 +107,7 @@ func _process(delta: float) -> void:
 		target_text,
 	]
 
-	player_health_fill.scale.x = clamp(ship.health / Ship.MAX_HEALTH, 0.0, 1.0)
+	player_health_fill.scale.x = clamp(ship.health / ship.max_health, 0.0, 1.0)
 
 	if _fire_cooldown_remaining > 0.0:
 		_fire_cooldown_remaining -= delta

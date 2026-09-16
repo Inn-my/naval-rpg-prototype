@@ -10,10 +10,11 @@ class_name Projectile
 const SPEED := 700.0
 const LIFETIME := 3.0
 const ARRIVAL_DISTANCE := 10.0
-const DAMAGE := 20.0
+const DEFAULT_DAMAGE := 20.0
 
 var target_position: Vector2
 var target: Node2D
+var damage: float = DEFAULT_DAMAGE
 
 var _elapsed: float = 0.0
 
@@ -38,5 +39,5 @@ func _on_hit_area_entered(area: Area2D) -> void:
 	if enemy != target:
 		return
 	if enemy.has_method("take_damage"):
-		enemy.take_damage(DAMAGE)
+		enemy.take_damage(damage)
 	queue_free()

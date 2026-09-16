@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="GameBalance" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/game_balance.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+player_max_health = 250.0
+enemy_weak_health = 60.0
+enemy_normal_health = 100.0
+enemy_strong_health = 150.0
+enemy_weak_damage = 10.0
+enemy_normal_damage = 20.0
+enemy_strong_damage = 30.0
+enemy_attack_cooldown = 4.5
+enemy_attack_cooldown_jitter = 2.0
+enemy_attack_range = 600.0

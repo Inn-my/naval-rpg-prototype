@@ -11,10 +11,12 @@ class_name Ship
 
 signal died
 
-const MAX_HEALTH := 100.0
+const BALANCE: GameBalance = preload("res://resources/game_balance.tres")
 
 @export var preset: ShipPreset
-@export var health: float = MAX_HEALTH
+@export var health: float = BALANCE.player_max_health
+
+var max_health: float = BALANCE.player_max_health
 
 var linear_velocity: Vector2 = Vector2.ZERO
 var angular_velocity: float = 0.0
