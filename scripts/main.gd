@@ -8,6 +8,11 @@ const ENEMY_SCENE: PackedScene = preload("res://scenes/Enemy.tscn")
 
 const FIRE_COOLDOWN := 1.0
 
+## Where the save file lives. user:// is Godot's per-user app-data location
+## (see the class explanation below for exact OS paths) — the right place
+## for save data as opposed to res://, which is the read-only game install.
+const SAVE_PATH := "user://savegame.json"
+
 ## Same scattered starting positions the original Enemy1-5 nodes used.
 const ENEMY_SPAWN_POSITIONS := [
 	Vector2(400, -200),
@@ -31,6 +36,7 @@ const ENEMY_TIERS := [EnemyShip.Tier.WEAK, EnemyShip.Tier.NORMAL, EnemyShip.Tier
 @onready var wave_respawn_timer: Timer = $WaveRespawnTimer
 @onready var trade_prompt_button: Button = $UI/TradePrompt
 @onready var trade_ui: TradeUI = $UI/TradeUI
+@onready var save_button: Button = $UI/SaveButton
 
 var _fire_cooldown_remaining: float = 0.0
 var _enemies_alive: int = 0
@@ -40,6 +46,7 @@ var _enemies_alive: int = 0
 var _ports_in_range: int = 0
 
 func _ready() -> void:
+	_load_game_if_present()
 	$UI/PresetBar/SloopButton.pressed.connect(_on_preset_selected.bind(SLOOP))
 	$UI/PresetBar/CorvetteButton.pressed.connect(_on_preset_selected.bind(CORVETTE))
 	$UI/PresetBar/GalleonButton.pressed.connect(_on_preset_selected.bind(GALLEON))
@@ -53,7 +60,87 @@ func _ready() -> void:
 		port.player_entered.connect(_on_port_range_entered)
 		port.player_exited.connect(_on_port_range_exited)
 	trade_prompt_button.pressed.connect(_on_trade_pressed)
+	save_button.pressed.connect(_save_game)
 	_spawn_wave()
+
+## --- Save/load -----------------------------------------------------------
+## A plain JSON file in user:// is a deliberately simple stand-in for the
+## SQLite-backed persistence layer described in docs/design-blueprint.md
+## (section 9) — swap this out for that once the game has enough systems
+## (quests, world state, multiple characters, etc.) to need a real database.
+
+func _save_game() -> void:
+	var save_data := {
+		"gold": PlayerWallet.gold,
+		"cargo": PlayerWallet.cargo,
+		"ship_health": ship.health,
+		"ship_preset": _preset_to_id(ship.preset),
+		"ship_position": [ship.position.x, ship.position.y],
+		"ship_rotation": ship.rotation,
+	}
+	var file := FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file == null:
+		push_warning("Could not write save file: %s" % error_string(FileAccess.get_open_error()))
+		return
+	file.store_string(JSON.stringify(save_data))
+	file.close()
+
+func _load_game_if_present() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if file == null:
+		push_warning("Could not read save file: %s" % error_string(FileAccess.get_open_error()))
+		return
+	var text: String = file.get_as_text()
+	file.close()
+
+	var parsed: Variant = JSON.parse_string(text)
+	if typeof(parsed) != TYPE_DICTIONARY:
+		push_warning("Save file is corrupt or unreadable; starting fresh instead.")
+		return
+	var save_data: Dictionary = parsed
+
+	# JSON has no separate int type, so numbers always come back as float —
+	# cast explicitly to match the int/float types gold/cargo/health actually use.
+	PlayerWallet.gold = int(save_data.get("gold", PlayerWallet.gold))
+	var cargo: Variant = save_data.get("cargo", {})
+	if typeof(cargo) == TYPE_DICTIONARY:
+		var loaded_cargo: Dictionary = {}
+		for good_id in cargo:
+			loaded_cargo[good_id] = int(cargo[good_id])
+		PlayerWallet.cargo = loaded_cargo
+
+	var preset: ShipPreset = _preset_from_id(save_data.get("ship_preset", ""))
+	if preset != null:
+		# apply_preset() resets rotation (and velocity) to put the ship at
+		# rest, so position/rotation must be restored after this call, not
+		# before, or they'd just get overwritten back to zero.
+		ship.apply_preset(preset)
+	ship.health = float(save_data.get("ship_health", ship.health))
+
+	var position_data: Variant = save_data.get("ship_position", null)
+	if typeof(position_data) == TYPE_ARRAY and position_data.size() == 2:
+		ship.position = Vector2(float(position_data[0]), float(position_data[1]))
+	ship.rotation = float(save_data.get("ship_rotation", ship.rotation))
+
+func _preset_to_id(preset: ShipPreset) -> String:
+	if preset == SLOOP:
+		return "sloop"
+	if preset == GALLEON:
+		return "galleon"
+	return "corvette"
+
+func _preset_from_id(id: String) -> ShipPreset:
+	match id:
+		"sloop":
+			return SLOOP
+		"galleon":
+			return GALLEON
+		"corvette":
+			return CORVETTE
+		_:
+			return null
 
 func _on_port_range_entered() -> void:
 	_ports_in_range += 1

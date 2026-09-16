@@ -76,6 +76,13 @@ text = "Trade"
 
 [node name="TradeUI" parent="UI" instance=ExtResource("6")]
 
+[node name="SaveButton" type="Button" parent="UI"]
+offset_left = 16.0
+offset_top = 180.0
+offset_right = 156.0
+offset_bottom = 220.0
+text = "Save"
+
 [node name="PresetBar" type="HBoxContainer" parent="UI"]
 anchors_preset = 1
 anchor_left = 1.0
