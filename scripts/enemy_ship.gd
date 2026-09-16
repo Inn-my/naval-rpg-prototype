@@ -134,8 +134,12 @@ func _process_attack(delta: float) -> void:
 	if _attack_cooldown_remaining > 0.0:
 		_attack_cooldown_remaining -= delta
 		return
-	var player: Node2D = get_tree().get_first_node_in_group("player")
+	var player: Ship = get_tree().get_first_node_in_group("player")
 	if player == null or not is_instance_valid(player):
+		return
+	# The captain has stepped off the ship to trade — enemies can't target
+	# or fire at all while this is set, not just have their shots blocked.
+	if player.is_invulnerable:
 		return
 	if global_position.distance_to(player.global_position) > BALANCE.enemy_attack_range:
 		return

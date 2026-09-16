@@ -62,12 +62,26 @@ func _on_sell_pressed(good: Dictionary) -> void:
 	if PlayerWallet.sell(good.id, good.sell_price):
 		refresh()
 
+## Marks the player ship invulnerable and makes enemies stop targeting/firing
+## at it (see Ship.is_invulnerable and EnemyShip._process_attack) for as long
+## as this panel is open — the captain has stepped off the ship to trade and
+## shouldn't be attackable mid-transaction. Deliberately doesn't touch
+## get_tree().paused: that would also freeze the Game Over flow and could
+## mask bugs there, and isn't needed for the save/load system either since
+## neither reads/writes on a timer. Restored the instant the panel closes.
 func open() -> void:
 	visible = true
+	_set_player_invulnerable(true)
 	refresh()
 
 func close() -> void:
 	visible = false
+	_set_player_invulnerable(false)
+
+func _set_player_invulnerable(value: bool) -> void:
+	var player: Ship = get_tree().get_first_node_in_group("player")
+	if player != null and is_instance_valid(player):
+		player.is_invulnerable = value
 
 func refresh() -> void:
 	gold_label.text = "Gold: %d" % PlayerWallet.gold

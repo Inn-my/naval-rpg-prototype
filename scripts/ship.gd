@@ -18,6 +18,13 @@ const BALANCE: GameBalance = preload("res://resources/game_balance.tres")
 
 var max_health: float = BALANCE.player_max_health
 
+## Backup safety net for the trade UI (see TradeUI.open/close): the captain
+## has stepped off the ship, so no damage should land even if an enemy shot
+## was already mid-flight the instant the menu opened. Enemies also stop
+## targeting/firing entirely while this is set (see EnemyShip._process_attack),
+## so in normal play this flag is the last-resort catch, not the main defense.
+var is_invulnerable: bool = false
+
 var linear_velocity: Vector2 = Vector2.ZERO
 var angular_velocity: float = 0.0
 
@@ -30,6 +37,8 @@ func _ready() -> void:
 	apply_preset(preset)
 
 func take_damage(amount: float) -> void:
+	if is_invulnerable:
+		return
 	var was_alive: bool = health > 0.0
 	health -= amount
 	if was_alive and health <= 0.0:
@@ -37,7 +46,10 @@ func take_damage(amount: float) -> void:
 		died.emit()
 
 ## Swaps the active hull preset for live feel comparison. Keeps world
-## position but resets heading/velocity so each hull starts from rest.
+## position but resets heading/velocity so each hull starts from rest, and
+## adopts the new hull's own max health at full (fresh hull, fresh hull
+## points) — save/load restores the real current health right after this
+## runs, so this doesn't affect loading a save.
 func apply_preset(new_preset: ShipPreset) -> void:
 	preset = new_preset
 	linear_velocity = Vector2.ZERO
@@ -47,6 +59,9 @@ func apply_preset(new_preset: ShipPreset) -> void:
 	if hull and preset:
 		hull.color = preset.hull_color
 		hull.scale = Vector2.ONE * preset.hull_scale
+	if preset:
+		max_health = preset.max_health
+		health = max_health
 
 func _physics_process(delta: float) -> void:
 	if preset == null:
@@ -73,6 +88,9 @@ func _update_angular(delta: float) -> void:
 	var kd: float = preset.get_kd()
 	var torque: float = preset.kp * theta_e + preset.ki * _angle_error_integral + kd * (-angular_velocity)
 	torque = clamp(torque, -preset.max_torque, preset.max_torque)
+	# Applied after the max_torque clamp so it scales the ship's full
+	# steering authority, not just how quickly it approaches that ceiling.
+	torque *= preset.turn_rate
 
 	var angular_acceleration: float = torque / preset.moment_of_inertia
 	angular_velocity += angular_acceleration * delta

@@ -21,6 +21,15 @@ class_name ShipPreset
 @export var max_torque: float = 200.0
 @export var integral_limit: float = 20.0
 
+@export_group("Ship Stats")
+@export var max_health: float = 100.0
+## Multiplier on the ship's steering torque (see Ship._update_angular). 1.0
+## is this project's original, untouched turning feel; higher values turn
+## the ship faster without upsetting the critical-damping math above, since
+## it scales the whole PID output rather than any one of kp/ki/max_torque.
+@export var turn_rate: float = 1.0
+@export var cargo_capacity: int = 20
+
 @export_group("Visuals")
 @export var hull_scale: float = 1.0
 @export var hull_color: Color = Color(0.8, 0.7, 0.5)

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3 uid="uid://b8v1wg317saxi"]
 
 [ext_resource type="Script" path="res://scripts/ship_preset.gd" id="1"]
 

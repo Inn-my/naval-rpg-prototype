@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3 uid="uid://4n1en7v5ku2w"]
 
 [ext_resource type="Script" path="res://scripts/ship_preset.gd" id="1"]
 
@@ -8,7 +8,7 @@ preset_name = "Sloop (Small / Fast)"
 mass = 40.0
 max_thrust = 280.0
 linear_drag = 2.5
-max_speed = 360.0
+max_speed = 333.25
 moment_of_inertia = 25.0
 kp = 120.0
 ki = 0.5

@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3]
+[gd_resource type="Resource" script_class="ShipPreset" load_steps=2 format=3 uid="uid://iumf15f2ibnp"]
 
 [ext_resource type="Script" path="res://scripts/ship_preset.gd" id="1"]
 
@@ -8,7 +8,7 @@ preset_name = "Corvette (Medium)"
 mass = 100.0
 max_thrust = 340.0
 linear_drag = 4.5
-max_speed = 250.0
+max_speed = 416.75
 moment_of_inertia = 90.0
 kp = 110.0
 ki = 0.5
