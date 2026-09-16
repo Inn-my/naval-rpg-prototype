@@ -19,6 +19,7 @@ config/icon="res://icon.svg"
 [autoload]
 
 SteeringInput="*res://scripts/steering_input.gd"
+PlayerWallet="*res://scripts/player_wallet.gd"
 
 [display]
 

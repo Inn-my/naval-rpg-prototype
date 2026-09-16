@@ -29,6 +29,9 @@ const ENEMY_TIERS := [EnemyShip.Tier.WEAK, EnemyShip.Tier.NORMAL, EnemyShip.Tier
 @onready var game_over_overlay: Control = $UI/GameOverOverlay
 @onready var restart_button: Button = $UI/GameOverOverlay/RestartButton
 @onready var wave_respawn_timer: Timer = $WaveRespawnTimer
+@onready var port: Port = $Port
+@onready var trade_prompt_button: Button = $UI/TradePrompt
+@onready var trade_ui: TradeUI = $UI/TradeUI
 
 var _fire_cooldown_remaining: float = 0.0
 var _enemies_alive: int = 0
@@ -43,7 +46,22 @@ func _ready() -> void:
 	ship.died.connect(_on_ship_died)
 	restart_button.pressed.connect(_on_restart_pressed)
 	wave_respawn_timer.timeout.connect(_spawn_wave)
+	port.player_entered.connect(_on_port_range_entered)
+	port.player_exited.connect(_on_port_range_exited)
+	trade_prompt_button.pressed.connect(_on_trade_pressed)
 	_spawn_wave()
+
+func _on_port_range_entered() -> void:
+	trade_prompt_button.visible = true
+
+## Leaving range also closes the trade panel if it's open — buying should
+## only be possible while actually at the port.
+func _on_port_range_exited() -> void:
+	trade_prompt_button.visible = false
+	trade_ui.close()
+
+func _on_trade_pressed() -> void:
+	trade_ui.open()
 
 func _on_preset_selected(preset: ShipPreset) -> void:
 	ship.apply_preset(preset)
